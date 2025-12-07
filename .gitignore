@@ -1,23 +1,22 @@
-# Python caches
+
 __pycache__/
 *.pyc
 
-# Variables de entorno y secretos (IMPORTANTE)
+
 .env
 .env.local
 config.py
 
-# Archivos de datos (No subir tus ventas ni inventario real)
+
 *.csv
 *.xlsx
 *.json
 pagina_completa.html
 
-# Entornos virtuales
 venv/
 env/
 .venv/
 
-# Logs y sistemas
+
 *.log
 .DS_Store
