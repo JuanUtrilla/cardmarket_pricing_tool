@@ -13,8 +13,6 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 # --- CONFIGURACIÓN ---
-# Recupera credenciales de variables de entorno para seguridad.
-# Si no están configuradas, el script las pedirá por consola.
 CM_USERNAME = os.getenv("CM_USERNAME")
 CM_PASSWORD = os.getenv("CM_PASSWORD")
 
@@ -22,7 +20,6 @@ def init_driver():
     """Inicializa el navegador Chrome con opciones básicas."""
     service = Service(ChromeDriverManager().install())
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")  # Descomentar si quieres ejecutarlo sin ver el navegador
     driver = webdriver.Chrome(service=service, options=options)
     return driver
 
@@ -42,7 +39,6 @@ def login_cardmarket(driver, username, password):
         driver.find_element(By.NAME, "userPassword").send_keys(password)
         driver.find_element(By.XPATH, "//input[@type='submit' and @value='Iniciar sesión']").click()
         
-        # Esperar a que cargue la dashboard para confirmar login
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.XPATH, "//h2[@class='ps-1 m-0' and text()='Tareas']"))
         )
@@ -87,7 +83,6 @@ def get_my_inventory(driver):
     
     print(f"Detectadas {len(expansiones)} expansiones con cartas.")
 
-    # Escrapeo iterativo
     data_list = []
     
     print("--- 2. Descargando inventario detallado ---")
@@ -96,7 +91,7 @@ def get_my_inventory(driver):
         total_pages = math.ceil(expansion['cartas'] / 20)
 
         for site in range(1, total_pages + 1):
-            # Pausa aleatoria para simular comportamiento humano (rate limiting)
+
             time.sleep(random.uniform(1.5, 3.0)) 
             
             url = f"https://www.cardmarket.com/en/Magic/Stock/Offers/Singles?idExpansion={expansion['codigo']}&site={site}"
@@ -151,7 +146,7 @@ def normalize_card_name(name):
     Normaliza nombres de cartas para generar la URL de búsqueda correcta.
     Maneja casos especiales y caracteres que rompen las URLs.
     """
-    # Mapeo manual de casos conflictivos detectados
+
     special_cases = {
         "Galadriel of Lothlórien": "Galadriel-of-Lothlorien",
         "Éomer of the Riddermark": "Eomer-of-the-Riddermark",
@@ -182,7 +177,7 @@ def analyze_market_prices(driver, df_inventory):
     # Iterar sobre cada carta del inventario
     for index, row in df_inventory.iterrows():
         try:
-            time.sleep(1.0) # Pausa ética entre peticiones
+            time.sleep(2.0) # Pausa ética entre peticiones
             
             card_name_url = normalize_card_name(row["Card Name"])
             
@@ -202,15 +197,12 @@ def analyze_market_prices(driver, df_inventory):
 
             driver.get(final_url)
             
-            # Parsear resultados
             soup = BeautifulSoup(driver.page_source, "html.parser")
             
-            # Selector CSS para precios (puede requerir mantenimiento si la web cambia)
             price_elements = soup.select("span.color-primary.small.text-end.text-nowrap.fw-bold")
             prices_float = []
             
             for idx, p in enumerate(price_elements, start=1):
-                # En Cardmarket los precios a veces aparecen duplicados o en estructuras pares
                 if idx % 2 == 0: 
                     try:
                         clean_price = p.text.strip().replace('€', '').replace(',', '.')
@@ -221,7 +213,6 @@ def analyze_market_prices(driver, df_inventory):
             market_min = np.min(prices_float) if prices_float else 0.0
             market_median = np.median(prices_float) if prices_float else 0.0
             
-            # Crear registro enriquecido con los datos de mercado
             row_data = row.to_dict()
             row_data.update({
                 "Market Min": market_min,
