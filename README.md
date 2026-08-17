@@ -1,56 +1,80 @@
-# 🃏 Cardmarket Price Tracker & Inventory Manager
+# Cardmarket — pipeline ETL de precios de mercado
 
-Herramienta de **Ingeniería de Datos y Automatización** desarrollada en Python para la gestión eficiente de inventario en el marketplace de Magic: The Gathering (Cardmarket).
+Herramienta en Python que extrae el inventario propio de un vendedor en **Cardmarket**
+(marketplace de Magic: The Gathering), obtiene por *scraping* los precios de mercado en
+tiempo real de cada carta y calcula métricas de competitividad para ajustar el precio de
+venta.
 
-Este proyecto implementa un pipeline **ETL (Extract, Transform, Load)** que extrae datos de inventario propio, realiza scraping de precios de mercado en tiempo real y calcula métricas de competitividad para optimizar estrategias de venta.
+## Qué resuelve
 
-## 🚀 Funcionalidades Clave
+Cardmarket no ofrece una vista que responda a la pregunta útil: *¿cuáles de mis cartas
+están mal valoradas ahora mismo?* Revisarlo a mano en un inventario de cientos de
+referencias es inviable. Este pipeline lo automatiza de extremo a extremo.
 
-* **Extracción Segura de Datos:** Automatización de login y navegación mediante **Selenium** gestionando sesiones y cookies.
-* **Web Scraping Robusto:** Uso de **BeautifulSoup4** para el parseo eficiente del DOM y extracción de metadatos (edición, condición, foil, idioma).
-* **Limpieza de Datos (Data Wrangling):** Normalización compleja de nombres de cartas y ediciones para asegurar la correspondencia exacta en las URLs de búsqueda (manejo de caracteres especiales, split cards, etc.).
-* **Análisis de Mercado:** Comparativa automática entre el precio listado y las tendencias del mercado (Mínimo y Mediana) usando **Pandas** y **NumPy**.
-* **Seguridad y Ética:** * Gestión de credenciales mediante variables de entorno (`.env`).
-    * Implementación de `Time Delays` aleatorios para respetar los servidores y evitar bloqueos (Rate Limiting).
+## Pipeline
 
-## 🛠️ Stack Tecnológico
+**1. Extracción.** Login automatizado y navegación con **Selenium**, gestionando sesión y
+cookies. Se recorre el inventario propio paginado.
 
-* **Lenguaje:** Python 3.x
-* **Automatización:** Selenium WebDriver
-* **Parsing:** BeautifulSoup4
-* **Análisis de Datos:** Pandas, NumPy
-* **Gestión de Entorno:** Python-dotenv, Webdriver-manager
+**2. Parseo.** **BeautifulSoup4** sobre el DOM para extraer, de cada artículo, la carta y
+sus metadatos: edición, estado de conservación, si es *foil* y el idioma. Los cuatro
+influyen en el precio y no se pueden ignorar al comparar.
 
-## ⚙️ Instalación y Uso
+**3. Normalización.** La parte con más casuística real: los nombres de cartas y ediciones
+deben convertirse a la forma exacta que espera la URL de búsqueda. Incluye caracteres
+especiales, acentos y las *split cards* (con dos nombres separados por barras), que siguen
+un formato de URL propio. Un fallo aquí no da error, da un resultado vacío silencioso.
 
-1.  **Clonar el repositorio:**
-    ```bash
-    git clone [https://github.com/tu-usuario/cardmarket_pricing_tool.git](https://github.com/tu-usuario/cardmarket_pricing_tool.git)
-    cd cardmarket_pricing_tool
-    ```
+**4. Análisis.** Con **pandas** y **NumPy**, comparación del precio listado frente al
+**mínimo y la mediana** del mercado. La mediana se usa deliberadamente en lugar de la
+media: el precio mínimo suele venir de artículos en mal estado o de vendedores
+extracomunitarios, y arrastra la media a la baja.
 
-2.  **Instalar dependencias:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+## Consideraciones de uso responsable
 
-3.  **Configurar Variables de Entorno:**
-    Crea un archivo `.env` en la raíz del proyecto para proteger tus credenciales:
-    ```bash
-    CM_USERNAME=tu_usuario
-    CM_PASSWORD=tu_contraseña
-    ```
+- **Credenciales fuera del código**, mediante variables de entorno con `python-dotenv`.
+  El fichero `.env` está excluido en `.gitignore` y nunca se ha versionado.
+- **Retardos aleatorios entre peticiones** para no sobrecargar el servidor y respetar un
+  ritmo de navegación razonable.
 
-4.  **Ejecutar el Script:**
-    ```bash
-    python scraper_cardmarket.py
-    ```
+Es una herramienta de uso personal sobre la propia cuenta y el propio inventario.
 
-## 📂 Estructura del Proyecto
+## Instalación y uso
+
+```bash
+git clone https://github.com/JuanUtrilla/cardmarket_pricing_tool.git
+cd cardmarket_pricing_tool
+pip install -r requirements.txt
+```
+
+Crea un fichero `.env` en la raíz con tus credenciales:
+
+```bash
+CM_USERNAME=tu_usuario
+CM_PASSWORD=tu_contraseña
+```
+
+Y ejecuta:
+
+```bash
+python scraper_cardmarket.py
+```
+
+Si no encuentra las variables de entorno, el script las pide por consola.
+
+## Estructura
 
 ```text
-├── scraper_cardmarket.py   # Script principal (Lógica ETL y Scraping)
-├── requirements.txt        # Dependencias del proyecto
-├── .env                    # Credenciales (No incluido en el repo por seguridad)
-├── .gitignore              # Configuración de exclusión de Git
-└── README.md               # Documentación
+├── scraper_cardmarket.py   # Lógica ETL y scraping
+├── requirements.txt        # Dependencias
+├── .gitignore              # Excluye .env, datos y artefactos
+└── README.md
+```
+
+## Stack
+
+Python · Selenium · BeautifulSoup4 · pandas · NumPy · python-dotenv · webdriver-manager
+
+---
+
+**Juan Peñas Utrilla** — [LinkedIn](https://www.linkedin.com/in/juan-penas-utrilla/) · [GitHub](https://github.com/JuanUtrilla)
